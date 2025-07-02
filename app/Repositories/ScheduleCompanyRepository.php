@@ -94,6 +94,18 @@ class ScheduleCompanyRepository
         $schedulePrevatRepository = new SchedulePrevatRepository();
         $schedulePrevatReturnDB = $schedulePrevatRepository->show($requestValidated['schedule_prevat_id'])['data'];
 
+        // Validação de compatibilidade entre contratos
+        if (isset($requestValidated['contract_id'])) {
+            $companyContract = \App\Models\CompaniesContracts::find($requestValidated['contract_id']);
+            if ($companyContract && $companyContract->contractor_id !== $schedulePrevatReturnDB['contractor_id']) {
+                return [
+                    'status' => 'error',
+                    'code' => 400,
+                    'message' => 'Este treinamento não está disponível para o contrato selecionado. Por favor, selecione um treinamento do seu contratante.'
+                ];
+            }
+        }
+
         $scheduleCompany = ScheduleCompany::query()->where('schedule_prevat_id', $requestValidated['schedule_prevat_id'])->first();
 
         if($scheduleCompany)  {
@@ -227,6 +239,18 @@ class ScheduleCompanyRepository
             $scheduleOldPrevatDB = SchedulePrevat::query()->find($scheduleCompanyDB['schedule_prevat_id']);
 
             if($requestValidated['schedule_prevat_id'] != $scheduleCompanyDB['schedule_prevat_id'] ) {
+                // Validação de compatibilidade entre contratos
+                if (isset($requestValidated['contract_id'])) {
+                    $companyContract = \App\Models\CompaniesContracts::find($requestValidated['contract_id']);
+                    $newSchedulePrevat = SchedulePrevat::find($requestValidated['schedule_prevat_id']);
+                    if ($companyContract && $companyContract->contractor_id !== $newSchedulePrevat->contractor_id) {
+                        return [
+                            'status' => 'error',
+                            'code' => 400,
+                            'message' => 'Este treinamento não está disponível para o contrato selecionado. Por favor, selecione um treinamento do seu contratante.'
+                        ];
+                    }
+                }
 
                 $scheduleOldPrevatDB->decrement('vacancies_occupied', $scheduleCompanyDB['participantsPresent']->count());
                 $scheduleOldPrevatDB->increment('vacancies_available', $scheduleCompanyDB['participantsPresent']->count());

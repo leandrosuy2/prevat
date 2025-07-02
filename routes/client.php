@@ -9,8 +9,8 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
     'client',
-    'contract_default'
-
+    'contract_default',
+    'sasha'
 ])->group(function () {
     //Dashboard
     Route::view('dashboard/', 'dashboard.index')->name('dashboard');
@@ -50,14 +50,12 @@ Route::middleware([
     //Empresa
     Route::view('empresa', 'client.company.index')->name('company');
 
-    //Movimentos Evidencias
-    // Route::view('movimentacoes/evidencia', 'client.movement.evidence.index')->name('evidence.client');
-    // Route::view('movimentacoes/evidencia/novo', 'client.movement.evidence.create')->name('movement.evidence.create');
-    // Route::view('movimentacoes/evidencia/{id}/editar', 'client.movement.evidence.edit')->name('movement.evidence.edit');
-    // Route::view('movimentacoes/evidencia/{id}/participantes', 'client.movement.evidence.participants')->name('movement.evidence.participants');
-    // Route::view('movimentacoes/evidencia/{id}/historicos', 'client.movement.evidence.historic')->name('movement.evidence.historic');
-
-   
+    //Movimentos Evidencias (liberado só para Sasha)
+    Route::view('movimentacoes/evidencia', 'client.movement.evidence.index')->name('evidence.client');
+    Route::view('movimentacoes/evidencia/novo', 'client.movement.evidence.create')->name('movement.evidence.create');
+    Route::view('movimentacoes/evidencia/{id}/editar', 'client.movement.evidence.edit')->name('movement.evidence.edit');
+    Route::view('movimentacoes/evidencia/{id}/participantes', 'client.movement.evidence.participants')->name('movement.evidence.participants');
+    Route::view('movimentacoes/evidencia/{id}/historicos', 'client.movement.evidence.historic')->name('movement.evidence.historic');
 });
 
 Route::view('sem-contrato', 'client.alerts.no-contracts')->name('client.alert.no-contracts');
