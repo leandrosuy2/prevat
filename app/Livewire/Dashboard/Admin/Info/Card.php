@@ -34,7 +34,7 @@ class Card extends Component
         $start = now()->startOfMonth();
         $end = now()->endOfMonth();
         
-        return \App\Models\SchedulePrevat::where('status', 'Concluído')
+        $count = \App\Models\SchedulePrevat::where('status', 'Concluído')
             ->whereBetween('date_event', [$start, $end])
             ->whereExists(function($query) {
                 $query->select(\DB::raw(1))
@@ -42,6 +42,10 @@ class Card extends Component
                       ->whereRaw('schedule_companies.schedule_prevat_id = schedule_prevats.id');
             })
             ->count();
+            
+        \Log::info('Dashboard Admin - Treinamentos com participação no mês: ' . $count);
+        
+        return $count;
     }
 
     // Empresas atendidas no mês (que participaram de treinamentos concluídos)
@@ -50,30 +54,32 @@ class Card extends Component
         $start = now()->startOfMonth();
         $end = now()->endOfMonth();
         
-        return \App\Models\ScheduleCompany::withoutGlobalScopes()
+        $count = \App\Models\ScheduleCompany::withoutGlobalScopes()
             ->whereHas('schedule', function($query) use ($start, $end) {
                 $query->where('status', 'Concluído')
                       ->whereBetween('date_event', [$start, $end]);
             })
             ->distinct('company_id')
             ->count('company_id');
+            
+        \Log::info('Dashboard Admin - Empresas únicas no mês: ' . $count);
+        
+        return $count;
     }
 
-    // Turmas extras no mês (type = 'Fechado' que tiveram participação)
+    // Turmas extras no mês (type = 'Fechado')
     private function getExtraClassesMonth()
     {
         $start = now()->startOfMonth();
         $end = now()->endOfMonth();
         
-        return \App\Models\SchedulePrevat::where('status', 'Concluído')
-            ->where('type', 'Fechado')
+        $count = \App\Models\SchedulePrevat::where('type', 'Fechado')
             ->whereBetween('date_event', [$start, $end])
-            ->whereExists(function($query) {
-                $query->select(\DB::raw(1))
-                      ->from('schedule_companies')
-                      ->whereRaw('schedule_companies.schedule_prevat_id = schedule_prevats.id');
-            })
             ->count();
+            
+        \Log::info('Dashboard Admin - Turmas extras (type=Fechado) no mês: ' . $count);
+        
+        return $count;
     }
 
     // Métodos de debug para verificar os dados

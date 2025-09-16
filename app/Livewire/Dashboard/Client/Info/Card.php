@@ -64,30 +64,45 @@ class Card extends Component
     {
         $start = now()->startOfMonth();
         $end = now()->endOfMonth();
-        return \App\Models\SchedulePrevat::where('status', 'Concluído')
+        
+        $count = \App\Models\SchedulePrevat::where('status', 'Concluído')
             ->whereBetween('date_event', [$start, $end])
             ->count();
+            
+        \Log::info('Dashboard Client - Treinamentos concluídos no mês: ' . $count);
+        
+        return $count;
     }
     // Empresas atendidas no mês
     private function getCompaniesMonth()
     {
         $start = now()->startOfMonth();
         $end = now()->endOfMonth();
-        return \App\Models\ScheduleCompany::whereHas('schedule', function($q) use ($start, $end) {
+        
+        $count = \App\Models\ScheduleCompany::whereHas('schedule', function($q) use ($start, $end) {
                 $q->where('status', 'Concluído')
                   ->whereBetween('date_event', [$start, $end]);
             })
             ->distinct('company_id')
             ->count('company_id');
+            
+        \Log::info('Dashboard Client - Empresas únicas no mês: ' . $count);
+        
+        return $count;
     }
     // Turmas extras no mês (type = 'Fechado')
     private function getExtraClassesMonth()
     {
         $start = now()->startOfMonth();
         $end = now()->endOfMonth();
-        return \App\Models\SchedulePrevat::where('status', 'Concluído')
+        
+        $count = \App\Models\SchedulePrevat::where('status', 'Concluído')
             ->where('type', 'Fechado')
             ->whereBetween('date_event', [$start, $end])
             ->count();
+            
+        \Log::info('Dashboard Client - Turmas extras concluídas (type=Fechado) no mês: ' . $count);
+        
+        return $count;
     }
 }

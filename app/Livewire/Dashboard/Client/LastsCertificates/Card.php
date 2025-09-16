@@ -12,7 +12,11 @@ class Card extends Component
     use Interactions;
     public function getLastsCertificates()
     {
-        return Evidence::query()->with('training')->orderBy('created_at', 'asc')->take(5)->get();
+        $certificates = Evidence::query()->with('training')->orderBy('created_at', 'asc')->take(5)->get();
+        
+        \Log::info('Dashboard Client - Últimos certificados: ' . $certificates->count());
+        
+        return $certificates;
     }
 
     public function download($id = null)

@@ -25,7 +25,7 @@ class Card extends Component
         $start = now()->startOfMonth();
         $end = now()->endOfMonth();
         
-        return \App\Models\SchedulePrevat::where('status', 'Concluído')
+        $count = \App\Models\SchedulePrevat::where('status', 'Concluído')
             ->whereBetween('date_event', [$start, $end])
             ->whereExists(function($query) {
                 $query->select(\DB::raw(1))
@@ -33,6 +33,10 @@ class Card extends Component
                       ->whereRaw('schedule_companies.schedule_prevat_id = schedule_prevats.id');
             })
             ->count();
+            
+        \Log::info('Dashboard Admin Graph01 - Treinamentos com participação neste mês: ' . $count);
+        
+        return $count;
     }
 
     private function getTrainingsLastMonth()
@@ -40,7 +44,7 @@ class Card extends Component
         $start = now()->subMonth()->startOfMonth();
         $end = now()->subMonth()->endOfMonth();
         
-        return \App\Models\SchedulePrevat::where('status', 'Concluído')
+        $count = \App\Models\SchedulePrevat::where('status', 'Concluído')
             ->whereBetween('date_event', [$start, $end])
             ->whereExists(function($query) {
                 $query->select(\DB::raw(1))
@@ -48,5 +52,9 @@ class Card extends Component
                       ->whereRaw('schedule_companies.schedule_prevat_id = schedule_prevats.id');
             })
             ->count();
+            
+        \Log::info('Dashboard Admin Graph01 - Treinamentos com participação no mês anterior: ' . $count);
+        
+        return $count;
     }
 }

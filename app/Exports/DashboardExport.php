@@ -225,7 +225,7 @@ class ExtraClassesSheet implements FromArray, WithTitle, WithHeadings, WithStyle
                 $turma->date_event ? Carbon::parse($turma->date_event)->format('d/m/Y') : '-',
                 optional($turma->training)->name ?? '-',
                 optional($turma->contractor)->fantasy_name ?? '-',
-                optional($turma->team)->name ?? '-',
+                $turma->turma_type ?? optional($turma->team)->name ?? '-',
             ];
         }
         return $data;

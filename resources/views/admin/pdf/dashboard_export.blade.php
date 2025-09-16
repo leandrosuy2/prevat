@@ -106,9 +106,18 @@
 
     @if(isset($turmasExtras))
     <div class="section">
-        <h2>Turmas extras no período</h2>
+        <h2>Turmas no período</h2>
         <div class="counter">{{ $turmasExtras->count() }}</div>
         <span class="small">No período</span>
+        
+        @php
+            $turmas1 = $turmasExtras->where('turma_type', '1ª TURMA');
+            $turmas2 = $turmasExtras->where('turma_type', '2ª TURMA');
+            $turmasExtra = $turmasExtras->where('turma_type', 'TURMA EXTRA');
+        @endphp
+        
+        @if($turmas1->count() > 0)
+        <h3 style="color: #2a4d8f; margin-top: 20px;">1ª TURMA ({{ $turmas1->count() }} turmas)</h3>
         <table>
             <thead>
                 <tr>
@@ -119,16 +128,65 @@
                 </tr>
             </thead>
             <tbody>
-            @foreach($turmasExtras as $turma)
+            @foreach($turmas1 as $turma)
                 <tr>
                     <td>{{ $turma->date_event ? \Carbon\Carbon::parse($turma->date_event)->format('d/m/Y') : '-' }}</td>
                     <td>{{ optional($turma->training)->name ?? '-' }}</td>
                     <td>{{ optional($turma->contractor)->fantasy_name ?? '-' }}</td>
-                    <td>{{ optional($turma->team)->name ?? '-' }}</td>
+                    <td>{{ $turma->turma_type ?? optional($turma->team)->name ?? '-' }}</td>
                 </tr>
             @endforeach
             </tbody>
         </table>
+        @endif
+        
+        @if($turmas2->count() > 0)
+        <h3 style="color: #2a4d8f; margin-top: 20px;">2ª TURMA ({{ $turmas2->count() }} turmas)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Treinamento</th>
+                    <th>Empresa Contratante</th>
+                    <th>Equipe</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach($turmas2 as $turma)
+                <tr>
+                    <td>{{ $turma->date_event ? \Carbon\Carbon::parse($turma->date_event)->format('d/m/Y') : '-' }}</td>
+                    <td>{{ optional($turma->training)->name ?? '-' }}</td>
+                    <td>{{ optional($turma->contractor)->fantasy_name ?? '-' }}</td>
+                    <td>{{ $turma->turma_type ?? optional($turma->team)->name ?? '-' }}</td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
+        @endif
+        
+        @if($turmasExtra->count() > 0)
+        <h3 style="color: #2a4d8f; margin-top: 20px;">TURMA EXTRA ({{ $turmasExtra->count() }} turmas)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Treinamento</th>
+                    <th>Empresa Contratante</th>
+                    <th>Equipe</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach($turmasExtra as $turma)
+                <tr>
+                    <td>{{ $turma->date_event ? \Carbon\Carbon::parse($turma->date_event)->format('d/m/Y') : '-' }}</td>
+                    <td>{{ optional($turma->training)->name ?? '-' }}</td>
+                    <td>{{ optional($turma->contractor)->fantasy_name ?? '-' }}</td>
+                    <td>{{ $turma->turma_type ?? optional($turma->team)->name ?? '-' }}</td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
+        @endif
     </div>
     @endif
 </body>

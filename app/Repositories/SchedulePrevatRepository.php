@@ -18,6 +18,10 @@ class SchedulePrevatRepository
     public function index($orderBy, $filterData = null, $pageSize = null)
     {
         try {
+            \Log::info('=== SCHEDULE PREVAT REPOSITORY - BUSCA NO BANCO ===');
+            \Log::info('Filtros aplicados:', $filterData ?? []);
+            \Log::info('Ordenação: ' . $orderBy['column'] . ' ' . $orderBy['order']);
+            
             $schedulePrevatDB = SchedulePrevat::query()->with(['training', 'workload', 'room', 'first_time', 'second_time', 'contractor']);
 
             if(isset(session('filter')['search']) && session('filter')['search'] != null) {
@@ -25,22 +29,42 @@ class SchedulePrevatRepository
                     $query->where('name', 'LIKE', '%'.session('filter')['search'].'%');
                     $query->orWhere('acronym', 'LIKE', '%'.session('filter')['search'].'%');
                 });
+                \Log::info('Filtro por busca: ' . session('filter')['search']);
             }
 
             if(isset(session('filter')['date_start']) && session('filter')['date_start'] != null) {
                 $schedulePrevatDB->whereDate('date_event', '>=', session('filter')['date_start']);
+                \Log::info('Filtro por data início: ' . session('filter')['date_start']);
             }
 
             if(isset(session('filter')['date_end']) && session('filter')['date_end'] != null) {
                 $schedulePrevatDB->whereDate( 'date_event', '<=', session('filter')['date_end']);
+                \Log::info('Filtro por data fim: ' . session('filter')['date_end']);
             }
 
             $schedulePrevatDB->orderBy($orderBy['column'], $orderBy['order']);
 
             if($pageSize) {
                 $schedulePrevatDB = $schedulePrevatDB->paginate($pageSize);
+                \Log::info('Paginação: ' . $pageSize . ' itens por página');
             } else {
                 $schedulePrevatDB = $schedulePrevatDB->get();
+                \Log::info('Busca sem paginação - Total de registros: ' . $schedulePrevatDB->count());
+            }
+
+            // Log detalhado dos dados encontrados
+            \Log::info('Dados encontrados no SchedulePrevatRepository:');
+            foreach ($schedulePrevatDB as $index => $item) {
+                \Log::info("Item " . ($index + 1) . ":", [
+                    'ID' => $item->id ?? 'N/A',
+                    'Data Evento' => $item->date_event ?? 'N/A',
+                    'Treinamento' => optional($item->training)->name ?? 'N/A',
+                    'Empresa Contratante' => optional($item->contractor)->fantasy_name ?? 'N/A',
+                    'Tipo' => $item->type ?? 'N/A',
+                    'Vagas' => $item->vacancies ?? 0,
+                    'Vagas Ocupadas' => $item->vacancies_occupied ?? 0,
+                    'Status' => $item->status ?? 'N/A'
+                ]);
             }
 
             return [
@@ -50,6 +74,7 @@ class SchedulePrevatRepository
             ];
 
         } catch (Exception $exception) {
+            \Log::error('Erro no SchedulePrevatRepository: ' . $exception->getMessage());
             return [
                 'status' => 'error',
                 'code' => 400,
