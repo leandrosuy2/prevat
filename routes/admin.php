@@ -167,6 +167,7 @@ Route::middleware([
     Route::view('relatorios/treinamentos-do-participante', 'admin.report.participant-training.index')->name('report.participant-training.index');
     Route::view('relatorios/empresas', 'admin.report.companies.index')->name('report.companies.index');
     Route::view('relatorios/treinamentos-empresas', 'admin.report.trainings.index')->name('report.trainings.index');
+    Route::view('relatorios/relatorio-mensal', 'admin.reports.monthly-report.index')->name('report.monthly-report.index');
 
     //Auditoria
     Route::view('auditoria', 'admin.audit.index')->name('audit.index');
