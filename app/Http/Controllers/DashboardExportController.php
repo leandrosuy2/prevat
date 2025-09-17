@@ -19,6 +19,7 @@ class DashboardExportController extends Controller
         $start = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $end = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
         $trainingId = $request->get('training_id');
+        $contractorFilter = $request->get('contractor_filter'); // 'alunorte' | 'prevat' | null
         $sections = $request->get('sections', ['trainings', 'companies', 'extra_classes']);
         $format = $request->get('format', 'pdf');
 
@@ -31,7 +32,8 @@ class DashboardExportController extends Controller
             'Data Fim' => $end,
             'Treinamento ID' => $trainingId,
             'Seções' => $sections,
-            'Formato' => $format
+            'Formato' => $format,
+            'Contratante' => $contractorFilter
         ]);
 
         $data = [
@@ -44,6 +46,21 @@ class DashboardExportController extends Controller
         if (in_array('trainings', $sections)) {
             $trainingReport = new TrainingReport();
             $trainings = $trainingReport->index(null, ['dates' => $dates], null)['data'];
+
+            // Filtrar por contratante se solicitado
+            if ($contractorFilter) {
+                $trainings = $trainings->filter(function($item) use ($contractorFilter) {
+                    $name = strtolower(optional($item->schedule->contractor)->fantasy_name ?? '');
+                    if ($contractorFilter === 'alunorte') {
+                        return str_contains($name, 'alunorte');
+                    }
+                    if ($contractorFilter === 'prevat') {
+                        return str_contains($name, 'prevat');
+                    }
+                    return true;
+                });
+                \Log::info('Filtro aplicado - Contratante (treinamentos): ' . $contractorFilter . ' -> ' . $trainings->count());
+            }
             
             // Log dos dados de treinamentos vindos do banco
             \Log::info('=== DADOS DE TREINAMENTOS DO BANCO ===');
@@ -75,9 +92,14 @@ class DashboardExportController extends Controller
         // Empresas atendidas (empresas com agendamento no período)
         if (in_array('companies', $sections)) {
             $companies = \App\Models\ScheduleCompany::withoutGlobalScopes()
-                ->whereHas('schedule', function($query) use ($start, $end) {
+                ->whereHas('schedule', function($query) use ($start, $end, $contractorFilter) {
                     $query->where('status', 'Concluído')
                           ->whereBetween('date_event', [$start, $end]);
+                    if ($contractorFilter === 'alunorte') {
+                        $query->whereHas('contractor', function($q){ $q->where('fantasy_name', 'like', '%ALUNORTE%'); });
+                    } elseif ($contractorFilter === 'prevat') {
+                        $query->whereHas('contractor', function($q){ $q->where('fantasy_name', 'like', '%PREVAT%'); });
+                    }
                 })
                 ->with('company')
                 ->get()
@@ -116,17 +138,29 @@ class DashboardExportController extends Controller
             $data['companies'] = $companies;
         }
 
-        // Turmas extras (type = 'Fechado')
+        // Turmas extras (detectadas por nome e filtradas diretamente no banco)
         if (in_array('extra_classes', $sections)) {
-            $schedulePrevatRepo = new SchedulePrevatRepository();
-            $orderBy = ['column' => 'date_event', 'order' => 'DESC'];
-            $turmasExtras = collect($schedulePrevatRepo->index($orderBy, null, null)['data'] ?? [])
-                ->filter(function($item) use ($start, $end, $trainingId) {
-                    $dateMatch = $item->date_event >= $start && $item->date_event <= $end;
-                    $typeMatch = $item->type === 'Fechado';
-                    $trainingMatch = !$trainingId || optional($item->training)->id == $trainingId;
-                    return $dateMatch && $typeMatch && $trainingMatch;
-                });
+            $turmasExtras = \App\Models\SchedulePrevat::query()
+                ->with(['team:id,name', 'training:id,name', 'contractor:id,fantasy_name'])
+                ->whereBetween('date_event', [$start, $end])
+                ->when($trainingId, function($q) use ($trainingId){
+                    $q->where('training_id', $trainingId);
+                })
+                ->when($contractorFilter === 'alunorte', function($q){
+                    $q->whereHas('contractor', function($qc){ $qc->where('fantasy_name', 'like', '%ALUNORTE%'); });
+                })
+                ->when($contractorFilter === 'prevat', function($q){
+                    $q->whereHas('contractor', function($qc){ $qc->where('fantasy_name', 'like', '%PREVAT%'); });
+                })
+                ->where(function($q){
+                    $q->whereHas('team', function($qt){
+                        $qt->where('name', 'like', '%EXTRA%')->orWhere('name', 'like', '%TURMA EXTRA%');
+                    })->orWhereHas('training', function($qr){
+                        $qr->where('name', 'like', '%TURMA EXTRA%');
+                    });
+                })
+                ->orderByDesc('date_event')
+                ->get();
             
             // Log dos dados de turmas extras vindos do banco
             \Log::info('=== DADOS DE TURMAS EXTRAS DO BANCO ===');

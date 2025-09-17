@@ -4,6 +4,7 @@ namespace App\Livewire\Dashboard\Admin\Info;
 
 use Livewire\Component;
 use Carbon\Carbon;
+use Livewire\Attributes\Reactive;
 
 class Card extends Component
 {
@@ -11,9 +12,16 @@ class Card extends Component
     public $companiesMonth;
     public $extraClassesMonth;
     public $trainings;
+    #[Reactive]
+    public $startDate;
+    #[Reactive]
+    public $endDate;
 
-    public function mount()
+    public function mount(?string $startDate = null, ?string $endDate = null)
     {
+        $this->startDate = $startDate ?: Carbon::now()->startOfMonth()->format('Y-m-d');
+        $this->endDate = $endDate ?: Carbon::now()->endOfMonth()->format('Y-m-d');
+
         $this->trainingsMonth = $this->getTrainingsMonth();
         $this->companiesMonth = $this->getCompaniesMonth();
         $this->extraClassesMonth = $this->getExtraClassesMonth();
@@ -31,8 +39,8 @@ class Card extends Component
     // Treinamentos ministrados no mês (que tiveram participação)
     private function getTrainingsMonth()
     {
-        $start = now()->startOfMonth();
-        $end = now()->endOfMonth();
+        $start = Carbon::parse($this->startDate)->startOfDay();
+        $end = Carbon::parse($this->endDate)->endOfDay();
         
         $count = \App\Models\SchedulePrevat::where('status', 'Concluído')
             ->whereBetween('date_event', [$start, $end])
@@ -51,8 +59,8 @@ class Card extends Component
     // Empresas atendidas no mês (que participaram de treinamentos concluídos)
     private function getCompaniesMonth()
     {
-        $start = now()->startOfMonth();
-        $end = now()->endOfMonth();
+        $start = Carbon::parse($this->startDate)->startOfDay();
+        $end = Carbon::parse($this->endDate)->endOfDay();
         
         $count = \App\Models\ScheduleCompany::withoutGlobalScopes()
             ->whereHas('schedule', function($query) use ($start, $end) {
@@ -67,17 +75,25 @@ class Card extends Component
         return $count;
     }
 
-    // Turmas extras no mês (type = 'Fechado')
+    // Turmas extras no período (identificadas por "EXTRA" no nome da equipe ou "TURMA EXTRA" no nome do treinamento)
     private function getExtraClassesMonth()
     {
-        $start = now()->startOfMonth();
-        $end = now()->endOfMonth();
-        
-        $count = \App\Models\SchedulePrevat::where('type', 'Fechado')
-            ->whereBetween('date_event', [$start, $end])
+        $start = Carbon::parse($this->startDate)->startOfDay();
+        $end = Carbon::parse($this->endDate)->endOfDay();
+
+        $count = \App\Models\SchedulePrevat::whereBetween('date_event', [$start, $end])
+            ->where(function($q){
+                $q->whereHas('team', function($q2){
+                    $q2->where('name', 'like', '%EXTRA%')
+                       ->orWhere('name', 'like', '%TURMA EXTRA%');
+                })
+                ->orWhereHas('training', function($q3){
+                    $q3->where('name', 'like', '%TURMA EXTRA%');
+                });
+            })
             ->count();
             
-        \Log::info('Dashboard Admin - Turmas extras (type=Fechado) no mês: ' . $count);
+        \Log::info('Dashboard Admin - Turmas extras no período (por nome): ' . $count);
         
         return $count;
     }
@@ -85,8 +101,8 @@ class Card extends Component
     // Métodos de debug para verificar os dados
     public function debugData()
     {
-        $start = now()->startOfMonth();
-        $end = now()->endOfMonth();
+        $start = Carbon::parse($this->startDate)->startOfDay();
+        $end = Carbon::parse($this->endDate)->endOfDay();
         
         // Debug: Total de SchedulePrevat concluídos no mês
         $totalConcluidos = \App\Models\SchedulePrevat::where('status', 'Concluído')

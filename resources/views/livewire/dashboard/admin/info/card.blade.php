@@ -22,14 +22,14 @@
                                 <div class="mb-3">
                                     <label for="start_date" class="form-label">Data Inicial</label>
                                     <input type="date" class="form-control" id="start_date" name="start_date" 
-                                           value="{{ now()->startOfMonth()->format('Y-m-d') }}" required>
+                                           value="{{ $startDate ?? now()->startOfMonth()->format('Y-m-d') }}" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="end_date" class="form-label">Data Final</label>
                                     <input type="date" class="form-control" id="end_date" name="end_date" 
-                                           value="{{ now()->endOfMonth()->format('Y-m-d') }}" required>
+                                           value="{{ $endDate ?? now()->endOfMonth()->format('Y-m-d') }}" required>
                                 </div>
                             </div>
                         </div>
@@ -41,6 +41,15 @@
                                 @foreach($trainings as $training)
                                     <option value="{{ $training->id }}">{{ $training->name }}</option>
                                 @endforeach
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="contractor_filter" class="form-label">Contratante</label>
+                            <select class="form-control" id="contractor_filter" name="contractor_filter">
+                                <option value="">Todos</option>
+                                <option value="alunorte">Alunorte</option>
+                                <option value="prevat">Prevat</option>
                             </select>
                         </div>
 

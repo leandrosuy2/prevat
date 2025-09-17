@@ -1,14 +1,26 @@
 <div>
     <!-- ROW -->
+    <div class="row mb-3">
+        <div class="col-md-3 col-sm-6 mb-2">
+            <label class="form-label mb-1">Data inicial</label>
+            <input type="date" class="form-control" wire:model.defer="startDate" wire:change="$refresh">
+        </div>
+        <div class="col-md-3 col-sm-6 mb-2">
+            <label class="form-label mb-1">Data final</label>
+            <input type="date" class="form-control" wire:model.defer="endDate" wire:change="$refresh">
+        </div>
+    </div>
+    
+    <!-- ROW -->
     <div class="row">
         <div class="col-12">
-            @livewire('dashboard.admin.info.card')
+            @livewire('dashboard.admin.info.card', ['startDate' => $startDate, 'endDate' => $endDate])
         </div>
     </div>
     <!-- END ROW -->
     <div class="row">
         <div class="col-12">
-            @livewire('dashboard.admin.graph01.card')
+            @livewire('dashboard.admin.graph01.card', ['startDate' => $startDate, 'endDate' => $endDate])
         </div>
     </div>
     <!-- END ROW -->

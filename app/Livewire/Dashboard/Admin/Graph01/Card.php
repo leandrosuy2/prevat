@@ -4,11 +4,22 @@ namespace App\Livewire\Dashboard\Admin\Graph01;
 
 use Livewire\Component;
 use Carbon\Carbon;
+use Livewire\Attributes\Reactive;
 
 class Card extends Component
 {
     public $trainingsThisMonth;
     public $trainingsLastMonth;
+    #[Reactive]
+    public $startDate;
+    #[Reactive]
+    public $endDate;
+
+    public function mount(?string $startDate = null, ?string $endDate = null): void
+    {
+        $this->startDate = $startDate ?: Carbon::now()->startOfMonth()->format('Y-m-d');
+        $this->endDate = $endDate ?: Carbon::now()->endOfMonth()->format('Y-m-d');
+    }
 
     public function render()
     {
@@ -22,8 +33,8 @@ class Card extends Component
 
     private function getTrainingsThisMonth()
     {
-        $start = now()->startOfMonth();
-        $end = now()->endOfMonth();
+        $start = Carbon::parse($this->startDate)->startOfDay();
+        $end = Carbon::parse($this->endDate)->endOfDay();
         
         $count = \App\Models\SchedulePrevat::where('status', 'Concluído')
             ->whereBetween('date_event', [$start, $end])
@@ -41,8 +52,11 @@ class Card extends Component
 
     private function getTrainingsLastMonth()
     {
-        $start = now()->subMonth()->startOfMonth();
-        $end = now()->subMonth()->endOfMonth();
+        $periodStart = Carbon::parse($this->startDate)->startOfDay();
+        $periodEnd = Carbon::parse($this->endDate)->endOfDay();
+        $diffDays = $periodStart->diffInDays($periodEnd) + 1;
+        $start = (clone $periodStart)->subDays($diffDays);
+        $end = (clone $periodEnd)->subDays($diffDays);
         
         $count = \App\Models\SchedulePrevat::where('status', 'Concluído')
             ->whereBetween('date_event', [$start, $end])
