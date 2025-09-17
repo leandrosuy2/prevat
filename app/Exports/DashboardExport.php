@@ -7,9 +7,14 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Font;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 use Carbon\Carbon;
 
 class DashboardExport implements WithMultipleSheets
@@ -49,7 +54,7 @@ class DashboardExport implements WithMultipleSheets
     }
 }
 
-class DashboardSummarySheet implements FromArray, WithTitle, WithHeadings, WithStyles
+class DashboardSummarySheet implements FromArray, WithTitle, WithHeadings, WithStyles, ShouldAutoSize, WithEvents
 {
     protected $data;
 
@@ -99,9 +104,25 @@ class DashboardSummarySheet implements FromArray, WithTitle, WithHeadings, WithS
             8 => ['font' => ['bold' => true]],
         ];
     }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+                $highestColumn = $sheet->getHighestColumn();
+                $highestRow = $sheet->getHighestRow();
+
+                // Melhorar visual
+                $sheet->getColumnDimension('A')->setAutoSize(true);
+                $sheet->getStyle('A1:A'.$highestRow)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+                $sheet->getStyle('A1')->getFont()->setSize(16);
+            }
+        ];
+    }
 }
 
-class TrainingsSheet implements FromArray, WithTitle, WithHeadings, WithStyles
+class TrainingsSheet implements FromArray, WithTitle, WithHeadings, WithStyles, ShouldAutoSize, WithEvents
 {
     protected $trainings;
 
@@ -145,9 +166,50 @@ class TrainingsSheet implements FromArray, WithTitle, WithHeadings, WithStyles
             1 => ['font' => ['bold' => true]],
         ];
     }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+                $highestColumn = $sheet->getHighestColumn();
+                $highestRow = $sheet->getHighestRow();
+
+                // Header style
+                $sheet->getStyle('A1:'.$highestColumn.'1')->applyFromArray([
+                    'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '3B82F6']],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                ]);
+
+                // Borders
+                $sheet->getStyle('A1:'.$highestColumn.$highestRow)->applyFromArray([
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => 'E5E7EB']
+                        ]
+                    ]
+                ]);
+
+                // Zebra striping
+                for ($row = 2; $row <= $highestRow; $row++) {
+                    if ($row % 2 === 0) {
+                        $sheet->getStyle('A'.$row.':'.$highestColumn.$row)
+                            ->getFill()->setFillType(Fill::FILL_SOLID)
+                            ->getStartColor()->setRGB('F9FAFB');
+                    }
+                }
+
+                // Freeze header and set auto filter
+                $sheet->freezePane('A2');
+                $sheet->setAutoFilter('A1:'.$highestColumn.'1');
+            }
+        ];
+    }
 }
 
-class CompaniesSheet implements FromArray, WithTitle, WithHeadings, WithStyles
+class CompaniesSheet implements FromArray, WithTitle, WithHeadings, WithStyles, ShouldAutoSize, WithEvents
 {
     protected $companies;
 
@@ -191,9 +253,49 @@ class CompaniesSheet implements FromArray, WithTitle, WithHeadings, WithStyles
             1 => ['font' => ['bold' => true]],
         ];
     }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+                $highestColumn = $sheet->getHighestColumn();
+                $highestRow = $sheet->getHighestRow();
+
+                // Header style
+                $sheet->getStyle('A1:'.$highestColumn.'1')->applyFromArray([
+                    'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '10B981']],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                ]);
+
+                // Borders
+                $sheet->getStyle('A1:'.$highestColumn.$highestRow)->applyFromArray([
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => 'E5E7EB']
+                        ]
+                    ]
+                ]);
+
+                // Zebra striping
+                for ($row = 2; $row <= $highestRow; $row++) {
+                    if ($row % 2 === 0) {
+                        $sheet->getStyle('A'.$row.':'.$highestColumn.$row)
+                            ->getFill()->setFillType(Fill::FILL_SOLID)
+                            ->getStartColor()->setRGB('F9FAFB');
+                    }
+                }
+
+                $sheet->freezePane('A2');
+                $sheet->setAutoFilter('A1:'.$highestColumn.'1');
+            }
+        ];
+    }
 }
 
-class ExtraClassesSheet implements FromArray, WithTitle, WithHeadings, WithStyles
+class ExtraClassesSheet implements FromArray, WithTitle, WithHeadings, WithStyles, ShouldAutoSize, WithEvents
 {
     protected $turmasExtras;
 
@@ -235,6 +337,46 @@ class ExtraClassesSheet implements FromArray, WithTitle, WithHeadings, WithStyle
     {
         return [
             1 => ['font' => ['bold' => true]],
+        ];
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+                $highestColumn = $sheet->getHighestColumn();
+                $highestRow = $sheet->getHighestRow();
+
+                // Header style
+                $sheet->getStyle('A1:'.$highestColumn.'1')->applyFromArray([
+                    'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'EF4444']],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                ]);
+
+                // Borders
+                $sheet->getStyle('A1:'.$highestColumn.$highestRow)->applyFromArray([
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => 'E5E7EB']
+                        ]
+                    ]
+                ]);
+
+                // Zebra striping
+                for ($row = 2; $row <= $highestRow; $row++) {
+                    if ($row % 2 === 0) {
+                        $sheet->getStyle('A'.$row.':'.$highestColumn.$row)
+                            ->getFill()->setFillType(Fill::FILL_SOLID)
+                            ->getStartColor()->setRGB('F9FAFB');
+                    }
+                }
+
+                $sheet->freezePane('A2');
+                $sheet->setAutoFilter('A1:'.$highestColumn.'1');
+            }
         ];
     }
 } 
