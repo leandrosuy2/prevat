@@ -12,7 +12,20 @@ class Card extends Component
     use Interactions;
     public function getLastsCertificates()
     {
-        $certificates = Evidence::query()->with('training')->orderBy('created_at', 'asc')->take(5)->get();
+        $certificates = Evidence::query()
+            ->with([
+                'training_participation' => function($query) {
+                    $query->with([
+                        'schedule_prevat' => function($query) {
+                            $query->withoutGlobalScopes();
+                        },
+                        'schedule_prevat.training'
+                    ]);
+                }
+            ])
+            ->orderBy('created_at', 'asc')
+            ->take(5)
+            ->get();
         
         \Log::info('Dashboard Client - Últimos certificados: ' . $certificates->count());
         

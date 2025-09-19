@@ -49,7 +49,15 @@ class Card extends Component
 
     public function downloadProgrammatic($id)
     {
-        $trainingParticipationDB = TrainingParticipations::query()->with(['schedule_prevat.training.technical', 'professionals'])->findOrFail($id);
+        $trainingParticipationDB = TrainingParticipations::query()
+            ->with([
+                'schedule_prevat' => function($query) {
+                    $query->withoutGlobalScopes();
+                },
+                'schedule_prevat.training.technical', 
+                'professionals'
+            ])
+            ->findOrFail($id);
 
         $data = ['content' => $trainingParticipationDB];
 

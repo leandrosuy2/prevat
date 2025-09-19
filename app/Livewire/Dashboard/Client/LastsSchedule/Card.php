@@ -9,7 +9,19 @@ class Card extends Component
 {
     public function getLastScheduleCompanies()
     {
-        $scheduleCompanies = ScheduleCompany::query()->with(['schedule.training','schedule.location', 'schedule.room', 'company'])->orderBy('created_at', 'desc')->take(5)->get();
+        $scheduleCompanies = ScheduleCompany::query()
+            ->with([
+                'schedule' => function($query) {
+                    $query->withoutGlobalScopes();
+                },
+                'schedule.training',
+                'schedule.location', 
+                'schedule.room', 
+                'company'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
         
         \Log::info('Dashboard Client - Últimos agendamentos: ' . $scheduleCompanies->count());
         
