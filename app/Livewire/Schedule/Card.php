@@ -68,11 +68,11 @@ class Card extends Component
                 }
 
                 if($this->contractor_id != null && Auth::user()->company->type == 'admin') {
-                    $schedulePrevatDB->withoutGlobalScopes()->where('contractor_id',  $this->contractor_id);
+                    $schedulePrevatDB->where('contractor_id',  $this->contractor_id);
                 }
 
                 if($this->company_id != null && Auth::user()->company->type == 'admin') {
-                    $schedulePrevatDB->withoutGlobalScopes()->where('company_id',  $this->company_id);
+                    $schedulePrevatDB->where('company_id',  $this->company_id);
                 }
 
                 $schedulePrevatDB = $schedulePrevatDB->first();

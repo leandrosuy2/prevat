@@ -13,16 +13,7 @@ class Card extends Component
     public function getLastsCertificates()
     {
         $certificates = Evidence::query()
-            ->with([
-                'training_participation' => function($query) {
-                    $query->with([
-                        'schedule_prevat' => function($query) {
-                            $query->withoutGlobalScopes();
-                        },
-                        'schedule_prevat.training'
-                    ]);
-                }
-            ])
+            ->with(['training_participation.schedule_prevat.training'])
             ->orderBy('created_at', 'asc')
             ->take(5)
             ->get();
