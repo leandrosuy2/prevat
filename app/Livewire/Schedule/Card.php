@@ -63,6 +63,7 @@ class Card extends Component
 
                 if(Auth::user()->company->type == 'client') {
                     $schedulePrevatDB->where('contractor_id', Auth::user()->contract_default->contractor_id);
+                    $schedulePrevatDB->where('company_id', Auth::user()->company->id);
                 } elseif (Auth::user()->company->type == 'contractor') {
                     $schedulePrevatDB->where('contractor_id', Auth::user()->company->id);
                 }
