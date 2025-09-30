@@ -85,8 +85,10 @@ class Card extends Component
 
                 if(Auth::user()->company->type == 'client') {
                     $schedulePrevatDB->where('contractor_id', Auth::user()->contract_default->contractor_id);
-                    // Quando nenhum filtro de empresa for informado, NÃO restringe por company_id para permitir ver todas as empresas
-                    if (!empty($this->company_id)) {
+                    // Quando nenhum filtro de empresa for informado, exibe apenas turmas não atribuídas a uma empresa específica
+                    if (empty($this->company_id)) {
+                        $schedulePrevatDB->whereNull('company_id');
+                    } else {
                         $schedulePrevatDB->where('company_id', $this->company_id);
                     }
                 } elseif (Auth::user()->company->type == 'contractor') {
