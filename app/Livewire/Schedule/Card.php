@@ -84,13 +84,10 @@ class Card extends Component
                 }
 
                 if(Auth::user()->company->type == 'client') {
+                    // Cliente não tem select de empresa na tela de agenda semanal.
+                    // Por padrão, sempre exibe apenas as turmas da própria empresa do cliente.
                     $schedulePrevatDB->where('contractor_id', Auth::user()->contract_default->contractor_id);
-                    // Quando nenhum filtro de empresa for informado, exibe apenas turmas não atribuídas a uma empresa específica
-                    if (empty($this->company_id)) {
-                        $schedulePrevatDB->whereNull('company_id');
-                    } else {
-                        $schedulePrevatDB->where('company_id', $this->company_id);
-                    }
+                    $schedulePrevatDB->where('company_id', Auth::user()->company->id);
                 } elseif (Auth::user()->company->type == 'contractor') {
                     $schedulePrevatDB->where('contractor_id', Auth::user()->company->id);
                 }
