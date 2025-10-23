@@ -116,11 +116,28 @@ class Table extends Component
     public function downloadPDF($evidence_id)
     {
         $evidenceDB = \App\Models\Evidence::query()->withoutGlobalScopes()->findOrFail($evidence_id);
+        
+        // Se não há file_path ou o arquivo não existe, gerar o PDF
+        if (!$evidenceDB['file_path'] || !file_exists(public_path('storage/' . $evidenceDB['file_path']))) {
+            $evidenceRepository = new \App\Repositories\Movements\EvidenceRepository();
+            $result = $evidenceRepository->generateCertificatesPDF($evidence_id);
+            
+            if ($result['status'] !== 'success') {
+                session()->flash('error', $result['message'] ?? 'Erro ao gerar PDF');
+                return null;
+            }
+            
+            // Atualizar a evidência com o novo caminho do arquivo
+            $evidenceDB = $evidenceDB->fresh();
+        }
+        
         $fullPath = public_path('storage/' . $evidenceDB['file_path']);
+        
         if (!file_exists($fullPath)) {
             session()->flash('error', 'Arquivo não encontrado.');
             return null;
         }
+        
         return response()->download($fullPath);
     }
 
