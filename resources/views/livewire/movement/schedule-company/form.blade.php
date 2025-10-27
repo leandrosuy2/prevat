@@ -136,7 +136,7 @@
 
                                             <p class="card-text"> 1º Horário : {{$response->event['first_time']['name']}}
                                                 @if($response->event['second_time'])
-                                                   - 2º Horário : {{$response->event['first_time']['name']}}
+                                                   - 2º Horário : {{$response->event['second_time']['name']}}
                                                 @endif
 
                                             </p>
